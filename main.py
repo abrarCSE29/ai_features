@@ -13,6 +13,6 @@ app.add_middleware(
 )
 
 
-@app.get("/")
+@app.get("/health")
 def startup():
     return {"status":"ai api running"}
