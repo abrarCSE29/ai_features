@@ -25,7 +25,7 @@ async def chat_with_bot(request: ChatRequest):
             session_id=request.session_id
         )
         return success(
-            data={"response": response_text, "session_id": request.session_id},
+            data={"bot_response": response_text, "session_id": request.session_id},
             message="Response generated successfully",
         )
     except ValueError as e:

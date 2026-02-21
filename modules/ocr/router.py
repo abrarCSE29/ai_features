@@ -1,50 +1,38 @@
 """Router for OCR service endpoints."""
 
-from typing import Optional, Union
+from typing import Union
 from fastapi import APIRouter, UploadFile, File
 
 from .service import OCRService
-from .models import OCRTextResponse, ErrorResponse
+from utils.api_response.service import success, error
+from utils.api_response.model import SuccessResponse, ErrorResponse
 
 router = APIRouter(prefix="/ocr", tags=["ocr"])
 
 
 @router.post(
     "/extract-text",
-    response_model=Union[OCRTextResponse, ErrorResponse],
+    response_model=Union[SuccessResponse, ErrorResponse],
 )
-async def extract_text_from_pdf(file: Optional[UploadFile] = File(None)):
+async def extract_text_from_pdf(file: UploadFile = File(...)):
     """
     Extract text from an uploaded PDF file.
-
-    Args:
-        file: PDF file uploaded by the client
-
-    Returns:
-        Dictionary containing the extracted text
     """
+    if not file.filename:
+        return error(message="No file provided. Please upload a PDF file.", status_code=400, error_code="NO_FILE")
+
+    content = await file.read()
+
+    if not content:
+        return error(message="File content is empty. Please upload a valid PDF file.", status_code=400, error_code="EMPTY_FILE")
+
     try:
-        # Check if file is provided
-        if file is None:
-            return {"status": "error", "message": "No file provided. Please upload a PDF file."}
-        
-        # Check if file is empty
-        if file.filename == "":
-            return {"status": "error", "message": "File is empty. Please upload a valid PDF file."}
-        
-        content = await file.read()
-        
-        # Check if content is empty
-        if not content:
-            return {"status": "error", "message": "File content is empty. Please upload a valid PDF file."}
-        
         extracted_text = OCRService.extract_text_from_file(content)
-        return {
-            "status": "success",
-            "filename": file.filename,
-            "text": extracted_text,
-        }
+        return success(
+            data={"filename": file.filename, "text": extracted_text},
+            message="Text extracted successfully",
+        )
     except ValueError as e:
-        return {"status": "error", "message": str(e)}
+        return error(message=str(e), status_code=422, error_code="OCR_ERROR")
     except Exception as e:
-        return {"status": "error", "message": f"Unexpected error: {str(e)}"}
+        return error(message=f"Unexpected error: {str(e)}", status_code=500, error_code="INTERNAL_ERROR")
