@@ -3,7 +3,7 @@
 from typing import Any, Dict, List, Optional
 from fastapi import Response
 
-from api_response.model import (
+from .model import (
     SuccessResponse,
     ErrorResponse,
     ValidationErrorResponse,
