@@ -1,17 +1,19 @@
 """Router for Chatbot service endpoints."""
 
 from typing import Union
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter
 
 from .chatbot_service import chatbot_service
-from .models import ChatRequest, ChatResponse, ErrorResponse
+from .models import ChatRequest
+from utils.api_response.service import success, error
+from utils.api_response.model import SuccessResponse, ErrorResponse
 
 router = APIRouter(prefix="/chatbot", tags=["chatbot"])
 
 
 @router.post(
     "/chat",
-    response_model=Union[ChatResponse, ErrorResponse],
+    response_model=Union[SuccessResponse, ErrorResponse],
 )
 async def chat_with_bot(request: ChatRequest):
     """
@@ -22,13 +24,11 @@ async def chat_with_bot(request: ChatRequest):
             message=request.message,
             session_id=request.session_id
         )
-
-        return {
-            "status": "success",
-            "response": response_text,
-            "session_id": request.session_id
-        }
+        return success(
+            data={"response": response_text, "session_id": request.session_id},
+            message="Response generated successfully",
+        )
     except ValueError as e:
-        return {"status": "error", "message": str(e)}
+        return error(message=str(e), status_code=400, error_code="CHATBOT_ERROR")
     except Exception as e:
-        return {"status": "error", "message": f"Unexpected error: {str(e)}"}
+        return error(message=f"Unexpected error: {str(e)}", status_code=500, error_code="INTERNAL_ERROR")
