@@ -5,7 +5,7 @@ from langchain_core.messages import SystemMessage
 from langgraph.prebuilt import create_react_agent
 from langgraph.checkpoint.memory import MemorySaver
 
-from config.app_config import AppConfig
+from config.app_config import AppConfig, ChatbotConfig
 from .tools import search_order, get_recent_orders
 
 
@@ -27,7 +27,7 @@ class ChatbotService:
 
         # Initialize the Gemini model
         self.llm = ChatGoogleGenerativeAI(
-            model="gemini-2.5-flash",
+            model=ChatbotConfig.model_name,
             google_api_key=AppConfig.google_api_key,
             temperature=0.7,
         )
@@ -64,7 +64,11 @@ class ChatbotService:
                 config=config,
             )
             # The last message in the response is the AI reply
-            return response["messages"][-1].content
+            raw_response = response["messages"][-1].content
+            response_dict = raw_response[0]
+
+            return response_dict.get("text")
+            
         except Exception as e:
             return f"Error generating response: {str(e)}"
 

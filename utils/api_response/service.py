@@ -1,7 +1,6 @@
 """Helper functions for creating standardized API responses."""
 
 from typing import Any, Dict, List, Optional
-from fastapi import Response
 
 from .model import (
     SuccessResponse,
