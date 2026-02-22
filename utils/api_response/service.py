@@ -15,12 +15,12 @@ def success(
     status_code: int = 200,
 ) -> SuccessResponse:
     """Create a success response.
-    
+
     Args:
         data: Response data
         message: Success message
         status_code: HTTP status code
-        
+
     Returns:
         SuccessResponse model
     """
@@ -36,11 +36,11 @@ def created(
     message: str = "Resource created successfully",
 ) -> SuccessResponse:
     """Create a 201 Created response.
-    
+
     Args:
         data: Response data
         message: Success message
-        
+
     Returns:
         SuccessResponse model with status code 201
     """
@@ -58,13 +58,13 @@ def error(
     details: Optional[Dict[str, Any]] = None,
 ) -> ErrorResponse:
     """Create an error response.
-    
+
     Args:
         message: Error message
         status_code: HTTP status code
         error_code: Error code identifier
         details: Additional error details
-        
+
     Returns:
         ErrorResponse model
     """
@@ -81,11 +81,11 @@ def not_found(
     error_code: str = "NOT_FOUND",
 ) -> ErrorResponse:
     """Create a 404 Not Found response.
-    
+
     Args:
         message: Error message
         error_code: Error code identifier
-        
+
     Returns:
         ErrorResponse model with status code 404
     """
@@ -101,11 +101,11 @@ def unauthorized(
     error_code: str = "UNAUTHORIZED",
 ) -> ErrorResponse:
     """Create a 401 Unauthorized response.
-    
+
     Args:
         message: Error message
         error_code: Error code identifier
-        
+
     Returns:
         ErrorResponse model with status code 401
     """
@@ -121,11 +121,11 @@ def forbidden(
     error_code: str = "FORBIDDEN",
 ) -> ErrorResponse:
     """Create a 403 Forbidden response.
-    
+
     Args:
         message: Error message
         error_code: Error code identifier
-        
+
     Returns:
         ErrorResponse model with status code 403
     """
@@ -141,11 +141,11 @@ def validation_error(
     errors: Optional[List[Dict[str, Any]]] = None,
 ) -> ValidationErrorResponse:
     """Create a 422 Validation Error response.
-    
+
     Args:
         message: Error message
         errors: List of validation errors
-        
+
     Returns:
         ValidationErrorResponse model with status code 422
     """

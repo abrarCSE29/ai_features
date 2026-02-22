@@ -3,9 +3,10 @@ import numpy as np
 import base64
 import os
 import shutil
-from typing import List, Dict
+from typing import List
 from ultralytics import YOLO
 from .models import DetectionInfo, ObjectDetectionResult
+
 
 class ObjectDetectionService:
     _model = None
@@ -21,9 +22,12 @@ class ObjectDetectionService:
                 os.makedirs(cls.MODEL_DIR, exist_ok=True)
                 try:
                     # Attempt to load/download
-                    model = YOLO(cls.MODEL_NAME)
+                    model = YOLO(cls.MODEL_NAME)  # noqa: F841
                     # If it was downloaded to the current directory, move it to MODEL_DIR
-                    if os.path.exists(cls.MODEL_NAME) and cls.MODEL_PATH != cls.MODEL_NAME:
+                    if (
+                        os.path.exists(cls.MODEL_NAME)
+                        and cls.MODEL_PATH != cls.MODEL_NAME
+                    ):
                         # Check if target already exists (unlikely given the if not exists check above)
                         if os.path.exists(cls.MODEL_PATH):
                             os.remove(cls.MODEL_PATH)
@@ -31,13 +35,17 @@ class ObjectDetectionService:
                     cls._model = YOLO(cls.MODEL_PATH)
                 except Exception as e:
                     # Fallback or re-raise with better message
-                    raise RuntimeError(f"Failed to load or download model {cls.MODEL_NAME}: {str(e)}")
+                    raise RuntimeError(
+                        f"Failed to load or download model {cls.MODEL_NAME}: {str(e)}"
+                    )
             else:
                 cls._model = YOLO(cls.MODEL_PATH)
         return cls._model
 
     @classmethod
-    def detect(cls, image_bytes: bytes, object_names: List[str], threshold: float) -> ObjectDetectionResult:
+    def detect(
+        cls, image_bytes: bytes, object_names: List[str], threshold: float
+    ) -> ObjectDetectionResult:
         """
         Perform object detection on the image and filter by object_names.
         """
@@ -51,7 +59,7 @@ class ObjectDetectionService:
         model = cls.get_model()
 
         # Map object names to class IDs (case-insensitive)
-        names = model.names # dict of {id: name}
+        names = model.names  # dict of {id: name}
         name_to_id = {v.lower(): k for k, v in names.items()}
 
         target_ids = []
@@ -63,7 +71,9 @@ class ObjectDetectionService:
         # Perform inference
         if target_ids:
             # Only detect the requested classes
-            results = model.predict(img, conf=threshold, classes=target_ids, verbose=False)[0]
+            results = model.predict(
+                img, conf=threshold, classes=target_ids, verbose=False
+            )[0]
         else:
             # If no requested objects are known by the model, we run with a very high threshold
             # to get an empty results object that still allows calling .plot()
@@ -81,7 +91,7 @@ class ObjectDetectionService:
             # Match back to the requested object name (case-insensitive)
             for obj in object_names:
                 if obj.lower() == class_name_found.lower():
-                    coords = box.xyxy[0].tolist() # [x1, y1, x2, y2]
+                    coords = box.xyxy[0].tolist()  # [x1, y1, x2, y2]
                     detections_data[obj]["count"] += 1
                     detections_data[obj]["boxes"].append(coords + [conf])
 
@@ -89,8 +99,8 @@ class ObjectDetectionService:
         annotated_img = results.plot()
 
         # Convert to JPEG
-        _, buffer = cv2.imencode('.jpg', annotated_img)
-        base64_image = base64.b64encode(buffer).decode('utf-8')
+        _, buffer = cv2.imencode(".jpg", annotated_img)
+        base64_image = base64.b64encode(buffer).decode("utf-8")
 
         # Format detection info
         formatted_detections = {
@@ -99,6 +109,5 @@ class ObjectDetectionService:
         }
 
         return ObjectDetectionResult(
-            detections=formatted_detections,
-            annotated_image=base64_image
+            detections=formatted_detections, annotated_image=base64_image
         )

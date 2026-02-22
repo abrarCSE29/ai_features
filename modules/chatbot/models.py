@@ -7,4 +7,6 @@ class ChatRequest(BaseModel):
     """Request model for the chatbot endpoint."""
 
     message: str = Field(..., description="The message from the user")
-    session_id: str = Field(..., description="Unique identifier for the chat session", example="session_123")
+    session_id: str = Field(
+        ..., description="Unique identifier for the chat session", example="session_123"
+    )

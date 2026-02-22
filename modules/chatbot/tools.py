@@ -5,6 +5,7 @@ from pymongo import MongoClient
 from langchain.tools import tool
 from config.app_config import AppConfig
 
+
 @tool
 def search_order(order_id: str) -> str:
     """
@@ -31,6 +32,7 @@ def search_order(order_id: str) -> str:
         return f"Error accessing database: {str(e)}"
     finally:
         client.close()
+
 
 @tool
 def get_recent_orders(limit: int = 5) -> str:

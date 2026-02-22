@@ -8,6 +8,7 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 load_dotenv()
 
+
 def create_dummy_data():
     """Populate MongoDB with dummy order data for testing the chatbot."""
     mongo_uri = os.getenv("MONGO_URI", "mongodb://localhost:27017/")
@@ -29,7 +30,7 @@ def create_dummy_data():
                 "items": ["Wireless Headphones", "USB-C Cable"],
                 "total_amount": 55.00,
                 "delivery_date": "2023-12-01",
-                "shipping_address": "123 Main St, Dhaka"
+                "shipping_address": "123 Main St, Dhaka",
             },
             {
                 "order_id": "ORD67890",
@@ -38,7 +39,7 @@ def create_dummy_data():
                 "items": ["Mechanical Keyboard"],
                 "total_amount": 85.50,
                 "delivery_date": "2023-12-05",
-                "shipping_address": "456 Side Rd, Chittagong"
+                "shipping_address": "456 Side Rd, Chittagong",
             },
             {
                 "order_id": "ORD11223",
@@ -47,7 +48,7 @@ def create_dummy_data():
                 "items": ["Gaming Mouse", "Mousepad"],
                 "total_amount": 40.00,
                 "delivery_date": "2023-11-20",
-                "shipping_address": "789 Park Ave, Sylhet"
+                "shipping_address": "789 Park Ave, Sylhet",
             },
             {
                 "order_id": "ORD44556",
@@ -56,8 +57,8 @@ def create_dummy_data():
                 "items": ["Webcam"],
                 "total_amount": 30.00,
                 "delivery_date": "N/A",
-                "shipping_address": "321 Oak St, Rajshahi"
-            }
+                "shipping_address": "321 Oak St, Rajshahi",
+            },
         ]
 
         # Clear existing data
@@ -65,11 +66,16 @@ def create_dummy_data():
 
         # Insert fresh dummy data
         result = collection.insert_many(dummy_orders)
-        print(f"Successfully inserted {len(result.inserted_ids)} dummy orders into 'daraz.orders'.")
+        print(
+            f"Successfully inserted {len(result.inserted_ids)} dummy orders into 'daraz.orders'."
+        )
 
     except Exception as e:
         print(f"Error connecting to MongoDB: {e}")
-        print("\nNote: Make sure your MongoDB instance is running and the MONGO_URI in .env is correct.")
+        print(
+            "\nNote: Make sure your MongoDB instance is running and the MONGO_URI in .env is correct."
+        )
+
 
 if __name__ == "__main__":
     create_dummy_data()

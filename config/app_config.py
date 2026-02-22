@@ -12,5 +12,6 @@ class AppConfig:
     google_api_key = os.getenv("GOOGLE_API_KEY")
     mongo_uri = os.getenv("MONGO_URI") or "mongodb://localhost:27017/"
 
+
 class ChatbotConfig:
     model_name = os.getenv("GEMINI_MODEL_NAME") or "gemini-2.5-flash"
