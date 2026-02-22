@@ -19,12 +19,20 @@ async def extract_text_from_pdf(file: UploadFile = File(...)):
     Extract text from an uploaded PDF file.
     """
     if not file.filename:
-        return error(message="No file provided. Please upload a PDF file.", status_code=400, error_code="NO_FILE")
+        return error(
+            message="No file provided. Please upload a PDF file.",
+            status_code=400,
+            error_code="NO_FILE",
+        )
 
     content = await file.read()
 
     if not content:
-        return error(message="File content is empty. Please upload a valid PDF file.", status_code=400, error_code="EMPTY_FILE")
+        return error(
+            message="File content is empty. Please upload a valid PDF file.",
+            status_code=400,
+            error_code="EMPTY_FILE",
+        )
 
     try:
         extracted_text = OCRService.extract_text_from_file(content)
@@ -35,4 +43,8 @@ async def extract_text_from_pdf(file: UploadFile = File(...)):
     except ValueError as e:
         return error(message=str(e), status_code=422, error_code="OCR_ERROR")
     except Exception as e:
-        return error(message=f"Unexpected error: {str(e)}", status_code=500, error_code="INTERNAL_ERROR")
+        return error(
+            message=f"Unexpected error: {str(e)}",
+            status_code=500,
+            error_code="INTERNAL_ERROR",
+        )

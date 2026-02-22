@@ -8,49 +8,52 @@ This project implements AI-powered services using a modular architecture. Each f
 
 ## Architecture
 
-- **Modular Design**: Each AI feature (e.g., OCR, Chatbot) is implemented as a separate module.
-- **Router-based Organization**: Each module has its own router for endpoint management.
-- **Service Layer**: Business logic is separated into dedicated service classes.
-- **Pydantic Models**: Strong typing with request/response validation.
-- **Agentic AI**: The chatbot uses LangGraph and Google Gemini for tool-calling capabilities.
+- **Modular Design**: Each AI feature (OCR, Chatbot, Object Detection) is implemented as a separate module
+- **Router-based Organization**: Each module has its own router for endpoint management
+- **Service Layer**: Business logic is separated into dedicated service classes
+- **Pydantic Models**: Strong typing with request/response validation
+- **Standardized Responses**: All endpoints use a unified `api_response` utility (`SuccessResponse` / `ErrorResponse`)
 
 ## Current Features
 
 ### OCR (Optical Character Recognition)
-Extract text from PDF documents using PyMuPDF. The OCR module provides text extraction capabilities for document processing.
+Extract text from PDF documents using PyMuPDF.
 
-### Chatbot (Order Tracking Assistant)
-An intelligent assistant for Daraz, an e-commerce platform.
-- **Order Tracking**: Users can check their order status by providing an order ID.
-- **Recent Orders**: Users can view their latest orders.
-- **Memory**: Supports per-session conversation history using LangGraph's `MemorySaver`.
-- **Tool Calling**: Uses ReAct agent pattern to interact with a MongoDB database.
+### Chatbot
+Conversational AI assistant powered by Google Gemini and LangGraph. Supports multi-turn conversations with session memory and tool-calling to look up order data from MongoDB.
+
+### Object Detection
+Detect objects in images using a YOLO model (YOLOv8). Supports filtering by object class, configurable confidence threshold, and returns per-object counts, bounding boxes, and an annotated image.
 
 ## Project Structure
 
 ```
 ai_features/
 ├── config/
-│   └── app_config.py          # Configuration management
+│   └── app_config.py              # Env-based configuration (CORS, API keys, DB)
 ├── modules/
-│   ├── chatbot/               # Chatbot module
-│   │   ├── tests/             # Module-specific tests
-│   │   ├── chatbot_service.py # Core chatbot logic (LangGraph/Gemini)
-│   │   ├── models.py          # Pydantic models for chatbot
-│   │   ├── router.py          # API endpoints
-│   │   └── tools.py           # LangChain tools for DB interaction
-│   └── ocr/                   # OCR module
-│       ├── tests/
-│       ├── models.py
-│       ├── router.py
-│       └── service.py
-├── scripts/
-│   └── setup_dummy_data.py    # Script to populate MongoDB with test data
+│   ├── chatbot/                   # Chatbot module
+│   │   ├── chatbot_service.py     # LangGraph ReAct agent + MemorySaver
+│   │   ├── tools.py               # search_order, get_recent_orders (MongoDB)
+│   │   ├── models.py              # ChatRequest
+│   │   └── router.py              # POST /chatbot/chat
+│   ├── ocr/                       # OCR module
+│   │   ├── service.py             # PyMuPDF text extraction
+│   │   ├── models.py              # (standardized responses used)
+│   │   └── router.py              # POST /ocr/extract-text
+│   └── object_detection/          # Object Detection module
+│       ├── service.py             # YOLO inference + image annotation
+│       ├── models.py              # DetectionInfo, ObjectDetectionResult
+│       └── router.py              # POST /object-detection/detect
 ├── utils/
-│   └── api_response/          # Standardized API response utilities
-├── main.py                    # FastAPI application entry point
-├── requirements.txt           # Project dependencies
-└── README.md                  # This file
+│   └── api_response/
+│       ├── model.py               # SuccessResponse, ErrorResponse
+│       └── service.py             # success(), error(), not_found(), etc.
+├── scripts/
+│   └── setup_dummy_data.py        # Seeds MongoDB with dummy Daraz order data
+├── main.py                        # FastAPI app entry point
+├── requirements.txt               # Project dependencies
+└── README.md                      # This file
 ```
 
 ## Setup
@@ -73,28 +76,30 @@ Or with pip:
 pip install -r requirements.txt
 ```
 
-### Environment Configuration
-
-Create a `.env` file in the root directory and add the following:
-
-```env
-# AI Features
-GOOGLE_API_KEY=your_google_api_key_here
-
-# Database
-MONGO_URI=mongodb://localhost:27017/
+3. Copy the example env file and fill in your values:
+```bash
+cp .env.example .env
 ```
 
-### Database Setup
+### Environment Variables
 
-To populate your MongoDB with dummy order data for the chatbot:
+| Variable | Description |
+|---|---|
+| `GOOGLE_API_KEY` | Google Gemini API key (required for chatbot) |
+| `MONGO_URI` | MongoDB connection string (default: `mongodb://localhost:27017/`) |
+| `ORIGINS` | CORS allowed origins (default: `["*"]`) |
+| `ALLOW_CREDENTIALS` | CORS allow credentials (default: `True`) |
+| `ALLOWED_METHODS` | CORS allowed methods (default: `["*"]`) |
+| `ALLOWED_HEADERS` | CORS allowed headers (default: `["*"]`) |
+
+### Seed Dummy Data (for Chatbot tool-calling)
 ```bash
 python scripts/setup_dummy_data.py
 ```
+This inserts 4 dummy Daraz orders into `mongodb://localhost:27017/daraz.orders`.
 
 ### Running the Application
 
-Start the API server:
 ```bash
 uvicorn main:app --reload
 ```
@@ -102,83 +107,114 @@ uvicorn main:app --reload
 ## API Base URL
 
 - **Local Development**: `http://localhost:8000`
-- **Remote Server**: `https://ai-features-ch9h.onrender.com` 
-- **API Documentation**: `<BASE_URL>/docs` (Swagger UI)
-- **Alternative Documentation**: `<BASE_URL>/redoc` (ReDoc)
+- **Remote Server**: `https://ai-features-ch9h.onrender.com`
+- **Swagger UI**: `<BASE_URL>/docs`
+- **ReDoc**: `<BASE_URL>/redoc`
+
+## Standard Response Format
+
+All endpoints return a unified response envelope:
+
+**Success:**
+```json
+{
+  "success": true,
+  "status_code": 200,
+  "message": "...",
+  "data": { ... }
+}
+```
+
+**Error:**
+```json
+{
+  "success": false,
+  "status_code": 400,
+  "error_code": "...",
+  "message": "..."
+}
+```
 
 ## API Endpoints
 
 ### Health Check
-- **Endpoint**: `GET /health`
-- **Description**: Check if the API is running
-- **Response**:
+- **`GET /health`**
+- Returns `{ "status": "ai api running" }`
+
+---
+
+### OCR — Extract Text from PDF
+- **`POST /ocr/extract-text`**
+- **Parameters**: `file` (form-data) — PDF file
+- **Success `data`**:
 ```json
 {
-  "status": "ai api running"
+  "filename": "document.pdf",
+  "text": "Extracted text content..."
 }
 ```
 
-### OCR - Extract Text from PDF
+---
 
-- **Endpoint**: `POST /ocr/extract-text`
-- **Description**: Extract text from an uploaded PDF file
-- **Parameters**:
-  - `file` (form-data, required): PDF file to extract text from
-- **Success Response** (200):
+### Chatbot — Chat with AI Assistant
+- **`POST /chatbot/chat`**
+- **Body** (JSON):
 ```json
 {
-  "success": true,
-  "status_code": 200,
-  "message": "Text extracted successfully",
-  "data": {
-    "filename": "document.pdf",
-    "text": "Extracted text from the PDF..."
-  }
-}
-```
-
-### Chatbot - Interact with Bot
-
-- **Endpoint**: `POST /chatbot/chat`
-- **Description**: Send a message to the AI assistant for order tracking and general queries.
-- **Request Body**:
-```json
-{
-  "message": "Where is my order ORD12345?",
+  "message": "What is the status of order ORD12345?",
   "session_id": "session_123"
 }
 ```
-- **Success Response** (200):
+- The `session_id` maintains conversation history across multiple requests.
+- **Built-in tools**: `search_order(order_id)`, `get_recent_orders(limit)`
+- **Success `data`**:
 ```json
 {
-  "success": true,
-  "status_code": 200,
-  "message": "Response generated successfully",
-  "data": {
-    "bot_response": "Your order ORD12345 has been shipped and is expected to arrive on 2023-12-01.",
-    "session_id": "session_123"
-  }
+  "message": "Your order ORD12345 has been shipped...",
+  "session_id": "session_123"
 }
 ```
 
+---
+
+### Object Detection — Detect Objects in an Image
+- **`POST /object-detection/detect`**
+- **Parameters** (form-data):
+  - `file` — Image file (JPEG, PNG, etc.)
+  - `object_names` — JSON array or comma-separated list of object classes to detect (e.g., `["person", "car"]` or `person,car`)
+  - `threshold` — Confidence threshold, float between 0 and 1 (default: `0.25`)
+- **Success `data`**:
+```json
+{
+  "detections": {
+    "person": {
+      "count": 2,
+      "boxes": [[x1, y1, x2, y2, confidence], ...]
+    },
+    "car": {
+      "count": 0,
+      "boxes": []
+    }
+  },
+  "annotated_image": "<base64-encoded JPEG>"
+}
+```
+- The model (`yolo26m.pt`) is auto-downloaded on first use and cached in the `models/` directory.
+- All requested object classes are always present in `detections`, even if count is 0.
+
 ## Technologies
 
-- **FastAPI**: Web framework for building APIs.
-- **LangChain / LangGraph**: Framework for building LLM-powered agents.
-- **Google Gemini**: Generative AI model for natural language processing.
-- **MongoDB**: NoSQL database for order data storage.
-- **PyMuPDF**: PDF text extraction.
-- **Pydantic**: Data validation and settings management.
-
-## Dependencies
-
-Key dependencies include:
-- `fastapi`
-- `langchain-google-genai`
-- `langgraph`
-- `pymongo`
-- `pymupdf`
-- `python-dotenv`
+| Technology | Purpose |
+|---|---|
+| FastAPI + Uvicorn | Web framework & ASGI server |
+| LangGraph + LangChain | Chatbot agent, tool-calling, session memory |
+| Google Gemini (`gemini-1.5-flash`) | LLM for chatbot |
+| MongoDB + PyMongo | Order database for chatbot tools |
+| PyMuPDF (`fitz`) | PDF text extraction |
+| Ultralytics YOLO | Object detection model |
+| OpenCV + NumPy | Image processing & annotation |
+| Pydantic | Data validation |
+| python-dotenv | Environment variable management |
 
 ## License
 

@@ -9,5 +9,6 @@ dependencies = [
     "pymupdf>=1.26.7",
     "python-dotenv>=1.2.1",
     "python-multipart>=0.0.22",
+    "ruff>=0.15.2",
     "uvicorn>=0.40.0",
 ]

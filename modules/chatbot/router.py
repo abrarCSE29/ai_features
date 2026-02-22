@@ -21,8 +21,7 @@ async def chat_with_bot(request: ChatRequest):
     """
     try:
         response_text = await chatbot_service.generate_response(
-            message=request.message,
-            session_id=request.session_id
+            message=request.message, session_id=request.session_id
         )
         return success(
             data={"bot_response": response_text, "session_id": request.session_id},
@@ -31,4 +30,8 @@ async def chat_with_bot(request: ChatRequest):
     except ValueError as e:
         return error(message=str(e), status_code=400, error_code="CHATBOT_ERROR")
     except Exception as e:
-        return error(message=f"Unexpected error: {str(e)}", status_code=500, error_code="INTERNAL_ERROR")
+        return error(
+            message=f"Unexpected error: {str(e)}",
+            status_code=500,
+            error_code="INTERNAL_ERROR",
+        )

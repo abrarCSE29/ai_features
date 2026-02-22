@@ -6,7 +6,7 @@ from pydantic import BaseModel, Field
 
 class SuccessResponse(BaseModel):
     """Standard success response model."""
-    
+
     success: bool = True
     status_code: int = 200
     message: Optional[str] = None
@@ -15,7 +15,7 @@ class SuccessResponse(BaseModel):
 
 class ErrorResponse(BaseModel):
     """Standard error response model."""
-    
+
     success: bool = False
     status_code: int = 400
     error_code: str = "ERROR"
@@ -25,7 +25,7 @@ class ErrorResponse(BaseModel):
 
 class ValidationError(BaseModel):
     """Validation error details."""
-    
+
     field: str = Field(..., alias="loc")
     message: str
     type: str
@@ -33,7 +33,7 @@ class ValidationError(BaseModel):
 
 class ValidationErrorResponse(BaseModel):
     """Validation error response model."""
-    
+
     success: bool = False
     status_code: int = 422
     error_code: str = "VALIDATION_ERROR"

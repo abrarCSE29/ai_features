@@ -18,3 +18,5 @@ langchain
 langchain-google-genai
 pymongo
 langchain-community
+ultralytics
+opencv-python-headless

@@ -68,7 +68,7 @@ class ChatbotService:
             response_dict = raw_response[0]
 
             return response_dict.get("text")
-            
+
         except Exception as e:
             return f"Error generating response: {str(e)}"
 
