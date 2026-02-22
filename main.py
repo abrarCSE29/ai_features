@@ -3,6 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from config.app_config import AppConfig
 from modules.ocr.router import router as ocr_router
 from modules.chatbot.router import router as chatbot_router
+from modules.object_detection.router import router as object_detection_router
 
 app = FastAPI()
 
@@ -17,6 +18,7 @@ app.add_middleware(
 # Include routers
 app.include_router(ocr_router)
 app.include_router(chatbot_router)
+app.include_router(object_detection_router)
 
 
 @app.get("/health")
