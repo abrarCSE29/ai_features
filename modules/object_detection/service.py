@@ -1,10 +1,7 @@
-import cv2
-import numpy as np
 import base64
 import os
 import shutil
 from typing import List
-from ultralytics import YOLO
 from .models import DetectionInfo, ObjectDetectionResult
 
 
@@ -17,6 +14,13 @@ class ObjectDetectionService:
     @classmethod
     def get_model(cls):
         """Load the YOLO model, downloading it if necessary."""
+        try:
+            from ultralytics import YOLO
+        except ImportError:
+            raise RuntimeError(
+                "Object Detection dependencies (ultralytics) are not available in this environment."
+            )
+
         if cls._model is None:
             if not os.path.exists(cls.MODEL_PATH):
                 os.makedirs(cls.MODEL_DIR, exist_ok=True)
@@ -49,6 +53,14 @@ class ObjectDetectionService:
         """
         Perform object detection on the image and filter by object_names.
         """
+        try:
+            import cv2
+            import numpy as np
+        except ImportError:
+            raise RuntimeError(
+                "Object Detection dependencies (OpenCV/NumPy) are not available in this environment."
+            )
+
         # Load image
         nparr = np.frombuffer(image_bytes, np.uint8)
         img = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
