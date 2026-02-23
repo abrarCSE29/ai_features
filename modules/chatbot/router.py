@@ -3,7 +3,7 @@
 from typing import Union
 from fastapi import APIRouter
 
-from .chatbot_service import chatbot_service
+from .service import chatbot_service
 from .models import ChatRequest
 from utils.api_response.service import success, error
 from utils.api_response.model import SuccessResponse, ErrorResponse

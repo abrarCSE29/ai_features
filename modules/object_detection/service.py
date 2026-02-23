@@ -7,7 +7,7 @@ from .models import DetectionInfo, ObjectDetectionResult
 
 class ObjectDetectionService:
     _model = None
-    MODEL_NAME = "yolo26m.pt"
+    MODEL_NAME = "yolo26m.onnx"
     MODEL_DIR = "models"
     MODEL_PATH = os.path.join(MODEL_DIR, MODEL_NAME)
 
@@ -64,6 +64,7 @@ class ObjectDetectionService:
         # Load image
         nparr = np.frombuffer(image_bytes, np.uint8)
         img = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
+        total_count = 0
 
         if img is None:
             raise ValueError("Invalid image format or empty image")
@@ -89,7 +90,7 @@ class ObjectDetectionService:
         else:
             # If no requested objects are known by the model, we run with a very high threshold
             # to get an empty results object that still allows calling .plot()
-            results = model.predict(img, conf=1.1, verbose=False)[0]
+            results = model.predict(img, conf=1.0, verbose=False)[0]
 
         # Initialize detections with count 0 for all requested objects
         detections_data = {obj: {"count": 0, "boxes": []} for obj in object_names}
@@ -105,6 +106,7 @@ class ObjectDetectionService:
                 if obj.lower() == class_name_found.lower():
                     coords = box.xyxy[0].tolist()  # [x1, y1, x2, y2]
                     detections_data[obj]["count"] += 1
+                    total_count += 1
                     detections_data[obj]["boxes"].append(coords + [conf])
 
         # Annotate image
@@ -121,5 +123,7 @@ class ObjectDetectionService:
         }
 
         return ObjectDetectionResult(
-            detections=formatted_detections, annotated_image=base64_image
+            detections=formatted_detections, 
+            annotated_image=base64_image if total_count>0 else "",
+            total_count=total_count
         )

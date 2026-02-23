@@ -17,6 +17,7 @@ async def detect_objects(
     object_names: str = Form(...),
     threshold: float = Form(0.25),
 ):
+    # Parse object_names (JSON string or comma-separated)
     try:
         parsed_names = json.loads(object_names)
         if not isinstance(parsed_names, list):
@@ -42,9 +43,10 @@ async def detect_objects(
 
     try:
         result = ObjectDetectionService.detect(content, parsed_names, threshold)
+        total_count = sum(d.count for d in result.detections.values())
         return success(
             data=result.model_dump(),
-            message="Objects detected successfully",
+            message="Objects detected successfully" if total_count > 0 else "No objects detected",
         )
     except ValueError as e:
         return error(message=str(e), status_code=422, error_code="DETECTION_ERROR")
