@@ -1,5 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 from config.app_config import AppConfig
 from modules.ocr.router import router as ocr_router
 from modules.chatbot.router import router as chatbot_router
@@ -19,6 +20,9 @@ app.add_middleware(
 app.include_router(ocr_router)
 app.include_router(chatbot_router)
 app.include_router(object_detection_router)
+
+# Mount static files
+app.mount("/static", StaticFiles(directory="static"), name="static")
 
 
 @app.get("/health")
