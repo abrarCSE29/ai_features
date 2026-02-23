@@ -49,6 +49,8 @@ ai_features/
 │   └── api_response/
 │       ├── model.py               # SuccessResponse, ErrorResponse
 │       └── service.py             # success(), error(), not_found(), etc.
+├── static/                        # Static files (HTML visualization)
+│   └── index.html                 # Object Detection web UI
 ├── scripts/
 │   └── setup_dummy_data.py        # Seeds MongoDB with dummy Daraz order data
 ├── main.py                        # FastAPI app entry point
@@ -181,7 +183,7 @@ All endpoints return a unified response envelope:
 - **`POST /object-detection/detect`**
 - **Parameters** (form-data):
   - `file` — Image file (JPEG, PNG, etc.)
-  - `object_names` — JSON array or comma-separated list of object classes to detect (e.g., `["person", "car"]` or `person,car`)
+  - `object_names` — JSON array string of object classes to detect (e.g., `["person", "car"]` or `person,car`)
   - `threshold` — Confidence threshold, float between 0 and 1 (default: `0.25`)
 - **Success `data`**:
 ```json
@@ -202,13 +204,17 @@ All endpoints return a unified response envelope:
 - The model (`yolo26m.pt`) is auto-downloaded on first use and cached in the `models/` directory.
 - All requested object classes are always present in `detections`, even if count is 0.
 
+**Visualization UI:**
+- Visit **`/static/index.html`** for an interactive web interface to test object detection
+- Features: Image upload preview, threshold slider, real-time results with annotated images and detection statistics
+
 ## Technologies
 
 | Technology | Purpose |
 |---|---|
 | FastAPI + Uvicorn | Web framework & ASGI server |
 | LangGraph + LangChain | Chatbot agent, tool-calling, session memory |
-| Google Gemini (`gemini-1.5-flash`) | LLM for chatbot |
+| Google Gemini (`gemini-2.5-flash`) | LLM for chatbot |
 | MongoDB + PyMongo | Order database for chatbot tools |
 | PyMuPDF (`fitz`) | PDF text extraction |
 | Ultralytics YOLO | Object detection model |
