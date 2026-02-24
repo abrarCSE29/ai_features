@@ -60,7 +60,43 @@ ai_features/
 
 ## Setup
 
-### Installation
+### Option 1: Docker (Recommended)
+
+The easiest way to run the application with all dependencies including MongoDB.
+
+1. Clone the repository:
+```bash
+git clone https://github.com/abrarCSE29/ai_features.git
+cd ai_features
+```
+
+2. Copy the example env file and fill in your values:
+```bash
+cp .env.example .env
+# Edit .env and add your GOOGLE_API_KEY
+```
+
+3. Build and start all services:
+```bash
+docker compose up -d
+```
+
+This will start:
+- **MongoDB** on port 3005
+- **FastAPI App** on port 8000
+- **Database setup** (populates dummy order data automatically)
+
+4. Check logs to verify everything is working:
+```bash
+docker compose logs -f
+```
+
+5. Stop the services:
+```bash
+docker compose down
+```
+
+### Option 2: Local Development
 
 1. Clone the repository:
 ```bash
