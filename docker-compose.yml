@@ -1,0 +1,50 @@
+
+services:
+  mongodb:
+    image: mongo:7.0
+    container_name: ai-features-mongodb
+    restart: unless-stopped
+    ports:
+      - "3005:27017"
+    environment:
+      MONGO_INITDB_DATABASE: daraz
+    volumes:
+      - mongodb_data:/data/db
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  setup-dummy-data:
+    build: .
+    container_name: ai-features-setup
+    depends_on:
+      mongodb:
+        condition: service_healthy
+    environment:
+      - MONGO_URI=mongodb://mongodb:27017/
+    command: >
+      sh -c "python scripts/setup_dummy_data.py"
+    restart: "no"
+
+  app:
+    build: .
+    container_name: ai-features-app
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    env_file:
+      - .env
+    environment:
+      - MONGO_URI=mongodb://mongodb:27017/
+    depends_on:
+      setup-dummy-data:
+        condition: service_completed_successfully
+    volumes:
+      - models_data:/app/models
+
+volumes:
+  mongodb_data:
+  models_data:

@@ -7,7 +7,7 @@ from .models import DetectionInfo, ObjectDetectionResult
 
 class ObjectDetectionService:
     _model = None
-    MODEL_NAME = "yolo26m.onnx"
+    MODEL_NAME = "yolo26m.pt"
     MODEL_DIR = "models"
     MODEL_PATH = os.path.join(MODEL_DIR, MODEL_NAME)
 

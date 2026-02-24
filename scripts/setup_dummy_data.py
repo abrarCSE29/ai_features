@@ -11,7 +11,7 @@ load_dotenv()
 
 def create_dummy_data():
     """Populate MongoDB with dummy order data for testing the chatbot."""
-    mongo_uri = os.getenv("MONGO_URI", "mongodb://localhost:27017/")
+    mongo_uri = os.getenv("MONGO_URI", "mongodb://mongodb:3005/")
     print(f"Connecting to MongoDB at: {mongo_uri}")
 
     try:

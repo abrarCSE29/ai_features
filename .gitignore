@@ -11,5 +11,5 @@ wheels/
 .env
 
 # Models
-models/
+models/*.pt
 .vercel
