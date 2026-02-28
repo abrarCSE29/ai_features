@@ -2,7 +2,7 @@
 
 from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain_core.messages import SystemMessage
-from langgraph.prebuilt import create_react_agent
+from langchain.agents import create_agent
 from langgraph.checkpoint.memory import MemorySaver
 
 from config.app_config import AppConfig, ChatbotConfig
@@ -39,11 +39,11 @@ class ChatbotService:
         self.tools = [search_order, get_recent_orders]
 
         # Create the ReAct agent (tool-calling) with persistent memory
-        self.agent = create_react_agent(
+        self.agent = create_agent(
             model=self.llm,
             tools=self.tools,
             checkpointer=self.memory,
-            prompt=SystemMessage(content=SYSTEM_PROMPT),
+            system_prompt=SystemMessage(content=SYSTEM_PROMPT),
         )
 
     async def generate_response(self, message: str, session_id: str) -> str:
