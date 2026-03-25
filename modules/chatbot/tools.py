@@ -35,6 +35,67 @@ def search_order(order_id: str) -> str:
 
 
 @tool
+def list_products(category: str = "", limit: int = 10) -> str:
+    """
+    List products available on Daraz, optionally filtered by category.
+    Use this when the user asks about available products, product listings, or wants to browse by category.
+    Each product has: name, category, vendor_name, stock, rating, price.
+    Args:
+        category: Filter by product category (e.g., "Electronics", "Fashion"). Leave empty to list all.
+        limit: Maximum number of products to return (default 10).
+    """
+    try:
+        client = MongoClient(AppConfig.mongo_uri)
+        db = client["daraz"]
+        collection = db["products"]
+
+        query = {}
+        if category:
+            query["category"] = {"$regex": category, "$options": "i"}
+
+        products = list(collection.find(query, {"_id": 0}).limit(limit))
+
+        if not products:
+            return f"No products found{' in category ' + category if category else ''}."
+
+        formatted = "\n".join(
+            f"- {p['name']} | Category: {p['category']} | Vendor: {p['vendor_name']} "
+            f"| Price: ${p['price']:.2f} | Stock: {p['stock']} | Rating: {p['rating']}"
+            for p in products
+        )
+        return f"Products{' in ' + category if category else ''}:\n{formatted}"
+
+    except Exception as e:
+        return f"Error fetching products: {str(e)}"
+    finally:
+        client.close()
+
+
+@tool
+def get_product_categories() -> str:
+    """
+    Get all available product categories on Daraz.
+    Use this when the user asks what categories of products are available.
+    """
+    try:
+        client = MongoClient(AppConfig.mongo_uri)
+        db = client["daraz"]
+        collection = db["products"]
+
+        categories = collection.distinct("category")
+
+        if not categories:
+            return "No product categories found in the database."
+
+        return "Available categories: " + ", ".join(sorted(categories))
+
+    except Exception as e:
+        return f"Error fetching categories: {str(e)}"
+    finally:
+        client.close()
+
+
+@tool
 def get_recent_orders(limit: int = 5) -> str:
     """
     Retrieve the most recent orders from the database.

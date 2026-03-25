@@ -5,6 +5,7 @@ from typing import Callable
 
 from fastapi import Request, Response
 from starlette.middleware.base import BaseHTTPMiddleware
+from utils.logger.logger import logger
 
 from utils.logger.bindings import set_request_id, clear_request_id
 
@@ -20,7 +21,7 @@ class RequestIDMiddleware(BaseHTTPMiddleware):
         """Process the request and add request_id to context."""
         # Get request_id from header or generate new one
         request_id = request.headers.get("X-Request-ID", str(uuid.uuid4()))
-        
+        logger.info(f"Request ID: {request_id}")
         # Set request_id in context for logging
         set_request_id(request_id)
         
