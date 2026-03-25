@@ -3,6 +3,9 @@
 import json
 import os
 import random
+import smtplib
+from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
 from pymongo import MongoClient
 from langchain.tools import tool
 from langchain_core.runnables import RunnableConfig
@@ -26,6 +29,92 @@ def _get_redis():
     client = redis.from_url(AppConfig.redis_uri, decode_responses=True)
     logger.info(message="Redis connection established")
     return client
+
+
+def _send_order_email(
+    to_email: str, customer_name: str, order_id: str, draft: dict
+) -> str:
+    if not AppConfig.smtp_user or not AppConfig.smtp_password:
+        logger.warning(message="_send_order_email: SMTP not configured, skipping")
+        return "skipped: SMTP not configured"
+
+    subject = f"Order Confirmation - {order_id}"
+
+    text_body = (
+        f"Hi {customer_name},\n\n"
+        f"Your order has been placed successfully!\n\n"
+        f"Order ID:          {order_id}\n"
+        f"Product:           {draft['product_name']}\n"
+        f"Quantity:          {draft['quantity']}\n"
+        f"Total:             ${draft['total_amount']:.2f}\n"
+        f"Shipping Address:  {draft['shipping_address']}\n"
+        f"Status:            Processing\n\n"
+        f"Thank you for shopping with Daraz!"
+    )
+
+    html_body = f"""\
+<html>
+<body style="font-family: Arial, sans-serif; color: #333;">
+  <h2>Order Confirmation</h2>
+  <p>Hi {customer_name},</p>
+  <p>Your order has been placed successfully!</p>
+  <table style="border-collapse: collapse; width: 100%; max-width: 480px;">
+    <tr><td style="padding: 8px; border-bottom: 1px solid #eee;"><strong>Order ID</strong></td>
+        <td style="padding: 8px; border-bottom: 1px solid #eee;">{order_id}</td></tr>
+    <tr><td style="padding: 8px; border-bottom: 1px solid #eee;"><strong>Product</strong></td>
+        <td style="padding: 8px; border-bottom: 1px solid #eee;">{draft["product_name"]}</td></tr>
+    <tr><td style="padding: 8px; border-bottom: 1px solid #eee;"><strong>Quantity</strong></td>
+        <td style="padding: 8px; border-bottom: 1px solid #eee;">{draft["quantity"]}</td></tr>
+    <tr><td style="padding: 8px; border-bottom: 1px solid #eee;"><strong>Total</strong></td>
+        <td style="padding: 8px; border-bottom: 1px solid #eee;">${draft["total_amount"]:.2f}</td></tr>
+    <tr><td style="padding: 8px; border-bottom: 1px solid #eee;"><strong>Shipping</strong></td>
+        <td style="padding: 8px; border-bottom: 1px solid #eee;">{draft["shipping_address"]}</td></tr>
+    <tr><td style="padding: 8px;"><strong>Status</strong></td>
+        <td style="padding: 8px;">Processing</td></tr>
+  </table>
+  <p style="margin-top: 20px;">Thank you for shopping with <strong>Daraz</strong>!</p>
+</body>
+</html>"""
+
+    try:
+        logger.info(
+            message="_send_order_email: sending email",
+            to=to_email,
+            smtp_host=AppConfig.smtp_host,
+            smtp_port=AppConfig.smtp_port,
+        )
+
+        msg = MIMEMultipart("alternative")
+        msg["From"] = AppConfig.smtp_from_email
+        msg["To"] = to_email
+        msg["Subject"] = subject
+        msg.attach(MIMEText(text_body, "plain"))
+        msg.attach(MIMEText(html_body, "html"))
+
+        with smtplib.SMTP(AppConfig.smtp_host, AppConfig.smtp_port) as server:
+            server.ehlo()
+            server.starttls()
+            server.ehlo()
+            server.login(AppConfig.smtp_user, AppConfig.smtp_password)
+            server.sendmail(AppConfig.smtp_from_email, to_email, msg.as_string())
+
+        logger.info(message="_send_order_email: email sent successfully", to=to_email)
+        return "sent"
+
+    except smtplib.SMTPException as e:
+        logger.error(
+            message="_send_order_email: SMTP error",
+            error_type=type(e).__name__,
+            error=str(e),
+        )
+        return f"failed: {str(e)}"
+    except Exception as e:
+        logger.error(
+            message="_send_order_email: unexpected error",
+            error_type=type(e).__name__,
+            error=str(e),
+        )
+        return f"failed: {str(e)}"
 
 
 @tool
@@ -384,10 +473,11 @@ def finalize_order(email: str, config: RunnableConfig = None) -> str:
             return f"Cannot finalize order with status '{draft.get('status')}'."
 
         order_id = f"ORD{random.randint(10000, 99999)}"
+        customer_name = email.split("@")[0]
 
         order = {
             "order_id": order_id,
-            "customer_name": "N/A",
+            "customer_name": customer_name,
             "email": email,
             "phone": draft["phone"],
             "status": "Processing",
@@ -419,6 +509,21 @@ def finalize_order(email: str, config: RunnableConfig = None) -> str:
             draft_key=draft_key,
         )
 
+        email_result = _send_order_email(email, customer_name, order_id, draft)
+        logger.info(
+            message="finalize_order: email result",
+            email_result=email_result,
+        )
+
+        if email_result == "sent":
+            email_status = f"Confirmation email sent to {email}."
+        elif email_result.startswith("skipped"):
+            email_status = (
+                "Email not configured — order confirmed without notification."
+            )
+        else:
+            email_status = "Order placed. Email delivery failed — we'll retry shortly."
+
         logger.info(
             message="finalize_order: order placement complete",
             order_id=order_id,
@@ -435,6 +540,7 @@ def finalize_order(email: str, config: RunnableConfig = None) -> str:
             f"Email: {email}\n"
             f"Shipping Address: {draft['shipping_address']}\n"
             f"Status: Processing\n\n"
+            f"{email_status}\n\n"
             f"Thank you for shopping with Daraz!"
         )
 
