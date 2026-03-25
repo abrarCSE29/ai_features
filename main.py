@@ -5,8 +5,13 @@ from config.app_config import AppConfig
 from modules.ocr.router import router as ocr_router
 from modules.chatbot.router import router as chatbot_router
 from modules.object_detection.router import router as object_detection_router
+from middleware import register_middleware
+from utils.logger.logger import Logger
 
 app = FastAPI()
+
+# Register custom middleware
+register_middleware(app)
 
 app.add_middleware(
     CORSMiddleware,
@@ -21,6 +26,7 @@ app.include_router(ocr_router)
 app.include_router(chatbot_router)
 app.include_router(object_detection_router)
 
+Logger().info("Starting AI API")
 # Mount static files
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
