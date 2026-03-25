@@ -1,11 +1,14 @@
 import json
 from typing import Union
 from fastapi import APIRouter, UploadFile, File, Form
+
+from utils.logger.logger import Logger
 from .service import ObjectDetectionService
 from utils.api_response.service import success, error
 from utils.api_response.model import SuccessResponse, ErrorResponse
 
 router = APIRouter(prefix="/object-detection", tags=["object-detection"])
+logger = Logger()
 
 
 @router.post(
@@ -17,6 +20,7 @@ async def detect_objects(
     object_names: str = Form(...),
     threshold: float = Form(0.25),
 ):
+    logger.info("Received Request at /detect")
     # Parse object_names (JSON string or comma-separated)
     try:
         parsed_names = json.loads(object_names)

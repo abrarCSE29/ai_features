@@ -20,3 +20,7 @@ pymongo
 langchain-community
 ultralytics
 opencv-python-headless
+structlog
+markdown-it-py
+rapidfuzz>=3.0.0
+redis>=5.0.0

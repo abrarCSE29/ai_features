@@ -3,10 +3,14 @@
 from typing import Union
 from fastapi import APIRouter
 
+from utils.logger.logger import Logger
+
 from .service import chatbot_service
 from .models import ChatRequest
 from utils.api_response.service import success, error
 from utils.api_response.model import SuccessResponse, ErrorResponse
+
+logger = Logger()
 
 router = APIRouter(prefix="/chatbot", tags=["chatbot"])
 
@@ -19,6 +23,8 @@ async def chat_with_bot(request: ChatRequest):
     """
     Interact with the chatbot.
     """
+    
+    logger.info(message="Request received at /chat endpoint")
     try:
         response_text = await chatbot_service.generate_response(
             message=request.message, session_id=request.session_id
@@ -28,6 +34,7 @@ async def chat_with_bot(request: ChatRequest):
             message="Response generated successfully",
         )
     except ValueError as e:
+        logger.error(message=f"Error generating response: {str(e)}")
         return error(message=str(e), status_code=400, error_code="CHATBOT_ERROR")
     except Exception as e:
         return error(
