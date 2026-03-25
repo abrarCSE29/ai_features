@@ -1,7 +1,6 @@
 """Tools for the chatbot to interact with external systems."""
 
 import json
-import os
 import random
 import smtplib
 from email.mime.multipart import MIMEMultipart

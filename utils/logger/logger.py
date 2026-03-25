@@ -1,8 +1,7 @@
 """Logger class using structlog for structured logging."""
 
-import os
 import threading
-from datetime import datetime, timedelta
+from datetime import datetime
 from logging.handlers import TimedRotatingFileHandler
 from pathlib import Path
 from typing import Any, Optional
@@ -99,7 +98,7 @@ class Logger:
         )
 
         # Get the root logger and add our handlers
-        root_logger = structlog.get_logger()
+        structlog.get_logger()
         
         # Add file handler to standard library logger
         stdlib_logger = structlog.stdlib.get_logger()
