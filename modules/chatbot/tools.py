@@ -96,6 +96,73 @@ def get_product_categories() -> str:
 
 
 @tool
+def search_products(query: str, limit: int = 7) -> str:
+    """
+    Search for products by keyword with fuzzy matching.
+    Use this when the user searches for a product by name or keyword
+    and does not know the exact product name (e.g., "headphones", "keyboard", "shoes").
+    Args:
+        query: The search keyword or partial product name (e.g., "headphones", "wireless mouse").
+        limit: Maximum number of results to return (default 7).
+    """
+    try:
+        from rapidfuzz import fuzz
+    except ImportError:
+        return "Product search is currently unavailable."
+
+    try:
+        client = MongoClient(AppConfig.mongo_uri)
+        db = client["daraz"]
+        collection = db["products"]
+
+        # Build $regex from query words for server-side pre-filtering
+        words = query.split()
+        regex_pattern = "|".join(word for word in words if word)
+        if not regex_pattern:
+            return "Please provide a search term."
+
+        query_filter = {
+            "$or": [
+                {"name": {"$regex": regex_pattern, "$options": "i"}},
+                {"category": {"$regex": regex_pattern, "$options": "i"}},
+            ]
+        }
+
+        candidates = list(collection.find(query_filter, {"_id": 0}))
+
+        if not candidates:
+            return f"No products found matching '{query}'."
+
+        # Score each candidate with fuzzy matching
+        scored = []
+        for product in candidates:
+            score = fuzz.token_set_ratio(query.lower(), product["name"].lower())
+            scored.append((score, product))
+
+        # Sort by fuzzy score descending, then by rating as tiebreaker
+        scored.sort(key=lambda x: (-x[0], -x[1].get("rating", 0)))
+
+        # Keep only results above minimum relevance threshold
+        results = [(s, p) for s, p in scored if s >= 40][:limit]
+
+        if not results:
+            return f"No products found matching '{query}'."
+
+        formatted = "\n".join(
+            f"- {p['name']} | Category: {p['category']} | Vendor: {p['vendor_name']} "
+            f"| Price: ${p['price']:.2f} | Stock: {p['stock']} | Rating: {p['rating']} "
+            f"| Match: {s}%"
+            for s, p in results
+        )
+        return f"Top results for '{query}':\n{formatted}"
+
+    except Exception as e:
+        return f"Error searching products: {str(e)}"
+    finally:
+        client.close()
+
+
+@tool
 def get_recent_orders(limit: int = 5) -> str:
     """
     Retrieve the most recent orders from the database.

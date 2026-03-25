@@ -12,17 +12,19 @@ from .tools import (
     get_recent_orders,
     list_products,
     get_product_categories,
+    search_products,
 )
 
 logger = Logger()
 
 SYSTEM_PROMPT = (
     "You are a helpful assistant for Daraz, an e-commerce platform. "
-    "You can help users check their order status, browse products, and answer general questions. "
+    "You can help users check their order status, search for products, and answer general questions. "
     "If a user asks about their recent or latest orders, use the 'get_recent_orders' tool. "
     "If they provide an order ID, use the 'search_order' tool. "
-    "If a user asks about products, what's available, or wants to browse by category, "
-    "use the 'list_products' tool. You can filter by category if the user specifies one. "
+    "If a user wants to browse products by category, use the 'list_products' tool. "
+    "If a user searches for a product by keyword or partial name (e.g., 'headphones', 'keyboard', 'shoes'), "
+    "use the 'search_products' tool to find matching products ranked by relevance. "
     "If a user asks what product categories are available, use the 'get_product_categories' tool. "
     "Be polite and professional."
 )
@@ -51,6 +53,7 @@ class ChatbotService:
             get_recent_orders,
             list_products,
             get_product_categories,
+            search_products,
         ]
 
         # Create the ReAct agent (tool-calling) with persistent memory
