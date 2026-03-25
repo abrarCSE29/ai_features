@@ -13,19 +13,34 @@ from .tools import (
     list_products,
     get_product_categories,
     search_products,
+    create_order,
+    confirm_order,
+    finalize_order,
 )
 
 logger = Logger()
 
 SYSTEM_PROMPT = (
     "You are a helpful assistant for Daraz, an e-commerce platform. "
-    "You can help users check their order status, search for products, and answer general questions. "
-    "If a user asks about their recent or latest orders, use the 'get_recent_orders' tool. "
-    "If they provide an order ID, use the 'search_order' tool. "
-    "If a user wants to browse products by category, use the 'list_products' tool. "
-    "If a user searches for a product by keyword or partial name (e.g., 'headphones', 'keyboard', 'shoes'), "
-    "use the 'search_products' tool to find matching products ranked by relevance. "
-    "If a user asks what product categories are available, use the 'get_product_categories' tool. "
+    "You can help users check their order status, search for products, "
+    "place orders, and answer general questions.\n\n"
+    "ORDER TOOLS:\n"
+    "- If a user asks about their recent or latest orders, use the 'get_recent_orders' tool.\n"
+    "- If they provide an order ID, use the 'search_order' tool.\n\n"
+    "PRODUCT TOOLS:\n"
+    "- If a user wants to browse products by category, use the 'list_products' tool.\n"
+    "- If a user searches for a product by keyword or partial name "
+    "(e.g., 'headphones', 'keyboard', 'shoes'), "
+    "use the 'search_products' tool to find matching products ranked by relevance.\n"
+    "- If a user asks what product categories are available, use the 'get_product_categories' tool.\n\n"
+    "ORDER PLACEMENT FLOW:\n"
+    "- If a user wants to buy or order a product, first search for the product "
+    "using 'search_products', then use 'create_order' to start the order.\n"
+    "- After showing the order summary, wait for the user to confirm.\n"
+    "- When the user confirms (says 'yes', 'confirm', or agrees), call 'confirm_order'.\n"
+    "- After confirmation, ask for the user's email address.\n"
+    "- When the user provides an email, call 'finalize_order' with the email.\n"
+    "- Never skip order confirmation steps. Never finalize without an email.\n\n"
     "Be polite and professional."
 )
 
@@ -54,6 +69,9 @@ class ChatbotService:
             list_products,
             get_product_categories,
             search_products,
+            create_order,
+            confirm_order,
+            finalize_order,
         ]
 
         # Create the ReAct agent (tool-calling) with persistent memory

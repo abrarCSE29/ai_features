@@ -17,6 +17,20 @@ services:
       retries: 5
       start_period: 10s
 
+  redis:
+    image: redis:7-alpine
+    container_name: ai-features-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
   setup-dummy-data:
     build: .
     container_name: ai-features-setup
@@ -39,7 +53,10 @@ services:
       - .env
     environment:
       - MONGO_URI=mongodb://mongodb:27017/
+      - REDIS_URI=redis://redis:6379/
     depends_on:
+      redis:
+        condition: service_healthy
       setup-dummy-data:
         condition: service_completed_successfully
     volumes:
@@ -48,3 +65,4 @@ services:
 volumes:
   mongodb_data:
   models_data:
+  redis_data:

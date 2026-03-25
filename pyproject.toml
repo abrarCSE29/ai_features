@@ -30,4 +30,5 @@ dependencies = [
     "uvicorn==0.40.0",
     "rapidfuzz>=3.0.0",
     "structlog>=25.5.0",
+    "redis>=5.0.0",
 ]
